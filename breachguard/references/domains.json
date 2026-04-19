@@ -1,0 +1,170 @@
+{
+  "domains": [
+    {
+      "id": "security",
+      "name": "Security",
+      "order": 1,
+      "lenses": ["injection", "xss-csrf", "auth-session", "authorization", "secrets", "dependency-cves", "security-headers", "cryptography", "input-sanitization", "data-exposure", "rate-abuse", "insecure-defaults", "sharp-edges", "supply-chain"]
+    },
+    {
+      "id": "code-quality",
+      "name": "Code Quality",
+      "order": 2,
+      "lenses": ["naming", "complexity", "dead-code", "duplication", "magic-values", "code-smells", "linting", "formatting", "comments", "type-safety", "immutability", "readability", "consistency", "pattern-consistency"]
+    },
+    {
+      "id": "architecture",
+      "name": "Architecture",
+      "order": 3,
+      "lenses": ["separation-of-concerns", "module-boundaries", "circular-deps", "coupling", "single-responsibility", "dependency-direction", "api-contract", "state-architecture", "extensibility"]
+    },
+    {
+      "id": "testing",
+      "name": "Testing",
+      "order": 4,
+      "lenses": ["unit-test-gaps", "integration-test-gaps", "e2e-test-gaps", "test-quality", "test-anti-patterns", "edge-cases", "error-path-tests", "test-maintainability", "test-determinism"]
+    },
+    {
+      "id": "error-handling",
+      "name": "Error Handling",
+      "order": 5,
+      "lenses": ["unhandled-errors", "error-swallowing", "error-messages", "error-boundaries", "graceful-degradation", "timeout-retry"]
+    },
+    {
+      "id": "performance",
+      "name": "Performance",
+      "order": 6,
+      "lenses": ["query-performance", "memory", "blocking-io", "frontend-perf", "caching", "algorithm", "pagination", "connection-mgmt", "startup-perf"]
+    },
+    {
+      "id": "api-design",
+      "name": "API Design",
+      "order": 7,
+      "lenses": ["rest-conventions", "request-validation", "response-consistency", "api-versioning", "api-idempotency", "api-documentation"]
+    },
+    {
+      "id": "database",
+      "name": "Database",
+      "order": 8,
+      "lenses": ["schema-design", "migration-quality", "index-strategy", "transaction-safety", "data-integrity", "query-safety"]
+    },
+    {
+      "id": "frontend",
+      "name": "Frontend",
+      "order": 9,
+      "lenses": ["component-architecture", "accessibility", "responsive-design", "routing", "frontend-security"]
+    },
+    {
+      "id": "visual-design",
+      "name": "Visual Design",
+      "order": 10,
+      "lenses": ["color-system", "typography-scale", "spacing-system", "visual-hierarchy", "icon-consistency"]
+    },
+    {
+      "id": "design-system",
+      "name": "Design System",
+      "order": 11,
+      "lenses": ["design-tokens", "component-library-usage", "css-architecture", "ui-copy-consistency"]
+    },
+    {
+      "id": "interaction-design",
+      "name": "Interaction Design",
+      "order": 12,
+      "lenses": ["loading-states", "error-states", "form-ux", "animation-transitions", "interactive-feedback", "touch-targets", "scroll-behavior", "keyboard-navigation"]
+    },
+    {
+      "id": "information-architecture",
+      "name": "Information Architecture",
+      "order": 13,
+      "lenses": ["empty-states", "navigation-patterns", "content-hierarchy", "search-ux", "help-context", "dashboard-patterns"]
+    },
+    {
+      "id": "adaptive-ux",
+      "name": "Adaptive UX",
+      "order": 14,
+      "lenses": ["theme-adaptation", "adaptive-content", "viewport-sizing", "rtl-layout", "print-stylesheet"]
+    },
+    {
+      "id": "ux-antipatterns",
+      "name": "UX Anti-Patterns",
+      "order": 15,
+      "lenses": ["dark-patterns", "cognitive-overload", "destructive-actions", "flow-dead-ends", "permission-antipatterns", "notification-interrupts"]
+    },
+    {
+      "id": "observability",
+      "name": "Observability",
+      "order": 16,
+      "lenses": ["logging", "structured-logging", "metrics", "audit-trail", "health-monitoring"]
+    },
+    {
+      "id": "devops",
+      "name": "DevOps",
+      "order": 17,
+      "lenses": ["ci-pipeline", "docker", "env-config", "deployment-safety", "infra-reproducibility", "dependency-management"]
+    },
+    {
+      "id": "compliance",
+      "name": "Compliance",
+      "order": 18,
+      "lenses": ["gdpr-dsgvo", "nis2", "sovereignty", "privacy-by-design", "data-retention", "consent-flows", "tos-legal-audit", "privacy-policy-audit", "impressum", "cookie-policy", "security-disclosure", "subscription-cancellation", "refund-widerrufsrecht", "price-transparency", "invoice-compliance", "payment-pci", "newsletter-consent", "dispute-resolution", "accessibility-eaa", "ai-act", "cyber-resilience-act", "youth-protection", "automated-decisions", "ecommerce-law", "sbom-supply-chain", "secure-sdlc", "incident-response", "audit-trail-gobd", "psd2-strong-auth", "dora-operational-resilience", "aml-kyc", "hipaa-health-data", "mdr-medical-device", "diga-health-app", "ccpa-consumer-rights", "whistleblower-protection", "employee-monitoring", "time-tracking", "pay-transparency", "algorithmic-discrimination", "unfair-practices", "digital-content-conformity", "review-authenticity", "personalized-pricing", "gambling-compliance", "food-labeling", "vehicle-cybersecurity", "smart-meter-data", "education-data", "clinical-trial-data", "kritis-infrastructure", "geoblocking", "platform-fairness", "bnpl-credit", "product-liability", "eidas-signatures"]
+    },
+    {
+      "id": "maintainability",
+      "name": "Maintainability",
+      "order": 19,
+      "lenses": ["tech-debt", "upgrade-paths", "config-patterns", "error-traceability", "modularity", "dependency-management"]
+    },
+    {
+      "id": "i18n",
+      "name": "Internationalization",
+      "order": 20,
+      "lenses": ["i18n-strings", "i18n-formatting"]
+    },
+    {
+      "id": "documentation",
+      "name": "Documentation",
+      "order": 21,
+      "lenses": ["code-docs", "architecture-docs", "operational-docs", "onboarding-docs"]
+    },
+    {
+      "id": "concurrency",
+      "name": "Concurrency",
+      "order": 22,
+      "lenses": ["race-conditions", "async-patterns", "resource-contention", "transaction-concurrency"]
+    },
+    {
+      "id": "discovery",
+      "name": "Product Discovery",
+      "order": 23,
+      "mode": "discover",
+      "lenses": ["product-gaps", "integration-opportunities", "ux-improvements", "monetization", "developer-experience", "automation", "data-insights", "scale-readiness", "community-ecosystem", "competitive-edge", "accessibility-inclusion", "content-education", "ai-augmentation", "workflow-orchestration"]
+    },
+    {
+      "id": "deployment",
+      "name": "Deployment",
+      "order": 24,
+      "mode": "deploy",
+      "lenses": ["service-health", "application-health", "tls-certificates", "dns-resolution", "time-synchronization", "network-security", "load-balancing", "reverse-proxy", "disk-storage", "memory-cpu", "resource-limits", "container-health", "database-health", "queue-messaging", "secrets-credentials", "ssh-access-control", "system-hardening", "log-analysis", "logging-pipeline", "monitoring-health", "backup-verification", "disaster-recovery", "config-drift", "dependency-health", "update-patching", "cronjob-scheduler"]
+    },
+    {
+      "id": "open-source-readiness",
+      "name": "Open Source Readiness",
+      "order": 25,
+      "mode": "opensource",
+      "lenses": ["secret-leaks", "license-compliance", "dependency-licensing", "internal-exposure", "git-history-secrets", "community-readiness", "documentation-gaps", "monetization-exposure", "pii-data-leakage", "build-reproducibility", "security-posture", "code-attribution", "trademark-branding"]
+    },
+    {
+      "id": "content-quality",
+      "name": "Content Quality",
+      "order": 26,
+      "mode": "content",
+      "lenses": ["content-inventory", "metadata-completeness", "content-staleness", "content-accessibility", "content-linking", "content-duplication", "content-completeness", "content-consistency", "code-examples", "content-pii", "multimedia-quality", "content-versioning", "audience-targeting", "content-localization", "topic-extraction", "content-planning", "exercise-design"]
+    },
+    {
+      "id": "toolgate",
+      "name": "Tool Gate",
+      "order": 27,
+      "lenses": ["lint", "typecheck", "security-sast", "security-deps", "quality-gates", "test-suite", "dast-web", "dast-injection", "dast-scanner", "dast-headers", "dast-api", "session-zap", "session-sqlmap", "session-nuclei", "session-lighthouse", "session-k6", "session-zap-api", "session-schemathesis"]
+    }
+  ]
+}

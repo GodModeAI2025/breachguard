@@ -1,0 +1,26 @@
+breachguard
+Copyright (c) 2026 Mark Zimmermann
+
+Licensed under the Apache License, Version 2.0 (the "License").
+You may not use this software except in compliance with the License.
+A copy of the License is provided in the LICENSE file.
+
+---
+
+Acknowledgement
+
+The methodology vocabulary used in this skill — specifically:
+
+  - the six-gate false-positive verification model
+    (Sink / Source / Reachability / Validation / Attacker-Control / Impact)
+  - the WHO / ACCESS / INTERFACE attacker-model triad
+  - the DIRECT / INFERENCE / HEURISTIC evidence classification
+  - the "fail-closed on uncertainty" verdict rule
+
+is drawn from Trail of Bits' public audit practice, most accessibly
+documented in the Testing Handbook at https://appsec.guide.
+
+These concepts are reimplemented in breachguard's own prose and code.
+No text or source code is copied from Trail of Bits materials. The
+intellectual origin of the vocabulary is credited to Trail of Bits;
+the implementation is independent.

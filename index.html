@@ -1,0 +1,1119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>breachguard — methodology-driven security audits for Claude</title>
+<meta name="description" content="A Claude skill that guides structured security audits: 283 lenses, 12 modes, 6 roles, 6 false-positive gates. Inspired by Trail of Bits' audit practice. Apache-2.0.">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT,WONK@0,9..144,300..900,0..100,0..1;1,9..144,300..900,0..100,0..1&family=JetBrains+Mono:ital,wght@0,400..700;1,400..700&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --bg: #0c0a08;
+  --bg-elev: #15120e;
+  --bg-surface: #1d1913;
+  --paper: #f4ebd8;
+  --ink: #e6dcc4;
+  --ink-muted: #8d8370;
+  --ink-dim: #5b544a;
+  --border: #2d2620;
+  --border-bright: #4a4037;
+  --rust: #c8432c;
+  --amber: #c8964b;
+  --olive: #7a8a4a;
+  --stamp: #963a26;
+  --font-display: 'Fraunces', 'Times New Roman', serif;
+  --font-mono: 'JetBrains Mono', 'Courier New', monospace;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 15px;
+  line-height: 1.6;
+  font-feature-settings: 'ss01';
+  min-height: 100vh;
+  overflow-x: hidden;
+  background-image:
+    radial-gradient(ellipse at top left, rgba(200, 67, 44, 0.04) 0%, transparent 50%),
+    radial-gradient(ellipse at bottom right, rgba(200, 150, 75, 0.03) 0%, transparent 50%);
+}
+
+/* Paper grain overlay */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.35;
+  z-index: 1;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.15 0 0 0 0 0.12 0 0 0 0 0.08 0 0 0 0.45 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  mix-blend-mode: overlay;
+}
+
+.content { position: relative; z-index: 2; }
+
+/* ── classification strip ─────────────────────────────────────────── */
+.classification {
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-elev);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  padding: 8px 24px;
+  color: var(--ink-muted);
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.classification .stamp {
+  color: var(--stamp);
+  border: 1px solid var(--stamp);
+  padding: 2px 8px;
+  transform: rotate(-2deg);
+  display: inline-block;
+  font-weight: 700;
+}
+
+/* ── container ────────────────────────────────────────────────────── */
+.wrap {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* ── header ───────────────────────────────────────────────────────── */
+header {
+  padding: 32px 0;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+header .logo {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 28px;
+  font-variation-settings: 'SOFT' 30, 'WONK' 1, 'opsz' 144;
+  letter-spacing: -0.02em;
+  color: var(--paper);
+}
+header .logo::before {
+  content: '▪ ';
+  color: var(--rust);
+}
+header nav { display: flex; gap: 24px; }
+header nav a {
+  color: var(--ink-muted);
+  text-decoration: none;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  padding-bottom: 2px;
+  border-bottom: 1px solid transparent;
+  transition: color 0.15s, border-color 0.15s;
+}
+header nav a:hover { color: var(--paper); border-bottom-color: var(--rust); }
+
+/* ── hero ─────────────────────────────────────────────────────────── */
+.hero {
+  padding: 96px 0 80px;
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 64px;
+  align-items: start;
+  border-bottom: 1px solid var(--border);
+}
+
+.hero-main h1 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(48px, 7vw, 92px);
+  line-height: 0.96;
+  letter-spacing: -0.035em;
+  color: var(--paper);
+  font-variation-settings: 'opsz' 144, 'SOFT' 20, 'WONK' 0;
+  margin-bottom: 28px;
+  animation: fadeUp 0.9s ease-out;
+}
+.hero-main h1 em {
+  font-style: italic;
+  font-variation-settings: 'opsz' 144, 'SOFT' 80, 'WONK' 1;
+  color: var(--amber);
+}
+.hero-main .lede {
+  font-size: 18px;
+  line-height: 1.55;
+  color: var(--ink);
+  max-width: 52ch;
+  margin-bottom: 40px;
+  font-family: var(--font-display);
+  font-weight: 300;
+  font-variation-settings: 'opsz' 60;
+  animation: fadeUp 0.9s ease-out 0.15s backwards;
+}
+
+.cta-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  animation: fadeUp 0.9s ease-out 0.3s backwards;
+}
+.btn {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  text-decoration: none;
+  padding: 14px 22px;
+  border: 1px solid var(--border-bright);
+  background: transparent;
+  color: var(--paper);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+.btn:hover { border-color: var(--rust); color: var(--rust); transform: translateY(-1px); }
+.btn.primary {
+  background: var(--rust);
+  border-color: var(--rust);
+  color: var(--paper);
+}
+.btn.primary:hover { background: transparent; color: var(--rust); }
+.btn .arrow { font-family: var(--font-mono); opacity: 0.7; }
+
+/* Hero side: file card */
+.file-card {
+  border: 1px solid var(--border-bright);
+  background: var(--bg-elev);
+  padding: 0;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  position: relative;
+  animation: fadeUp 0.9s ease-out 0.4s backwards;
+}
+.file-card .head {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  color: var(--ink-muted);
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+.file-card .head .dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--rust);
+  margin-right: 6px;
+  animation: pulse 2s ease-in-out infinite;
+}
+.file-card .body {
+  padding: 18px 16px;
+  line-height: 1.7;
+}
+.file-card .body .row {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: 12px;
+  padding: 4px 0;
+}
+.file-card .body .row .k { color: var(--ink-muted); }
+.file-card .body .row .v { color: var(--ink); }
+.file-card .body .row .v.red { color: var(--rust); }
+.file-card .body .row .v.amber { color: var(--amber); }
+.file-card .body .row .v.olive { color: var(--olive); }
+
+.gates-inline {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.gate-pill {
+  padding: 4px 6px;
+  border: 1px solid var(--border);
+  text-align: center;
+}
+.gate-pill.pass { color: var(--olive); border-color: rgba(122, 138, 74, 0.4); }
+.gate-pill.fail { color: var(--rust); border-color: rgba(200, 67, 44, 0.5); }
+.gate-pill.unc  { color: var(--amber); border-color: rgba(200, 150, 75, 0.4); }
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ── section ──────────────────────────────────────────────────────── */
+section {
+  padding: 96px 0;
+  border-bottom: 1px solid var(--border);
+}
+.sec-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  color: var(--rust);
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.sec-label::before {
+  content: '';
+  width: 32px;
+  height: 1px;
+  background: var(--rust);
+  display: inline-block;
+}
+.sec-h {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(32px, 5vw, 52px);
+  line-height: 1.04;
+  letter-spacing: -0.025em;
+  color: var(--paper);
+  font-variation-settings: 'opsz' 100, 'SOFT' 30;
+  margin-bottom: 32px;
+  max-width: 22ch;
+}
+.sec-h em {
+  font-style: italic;
+  color: var(--amber);
+  font-variation-settings: 'opsz' 100, 'SOFT' 80, 'WONK' 1;
+}
+.sec-lede {
+  font-family: var(--font-display);
+  font-weight: 300;
+  font-size: 19px;
+  line-height: 1.55;
+  color: var(--ink);
+  max-width: 62ch;
+  margin-bottom: 48px;
+  font-variation-settings: 'opsz' 60;
+}
+
+/* ── problem section ──────────────────────────────────────────────── */
+.problem-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 48px;
+  margin-top: 40px;
+}
+.problem-col h3 {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.problem-col p {
+  font-family: var(--font-display);
+  font-weight: 300;
+  font-size: 17px;
+  line-height: 1.6;
+  color: var(--ink);
+  margin-bottom: 16px;
+  font-variation-settings: 'opsz' 40;
+}
+.problem-col.bad p strike,
+.problem-col.bad p { position: relative; }
+.redacted {
+  background: var(--paper);
+  color: var(--paper);
+  padding: 0 4px;
+  user-select: none;
+}
+
+/* ── methodology: 5-phase ribbon ──────────────────────────────────── */
+.method-ribbon {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0;
+  margin: 48px 0;
+  border: 1px solid var(--border-bright);
+  background: var(--bg-elev);
+}
+.phase {
+  padding: 24px 20px;
+  border-right: 1px solid var(--border);
+  position: relative;
+}
+.phase:last-child { border-right: none; }
+.phase .num {
+  font-family: var(--font-display);
+  font-size: 48px;
+  font-weight: 200;
+  font-variation-settings: 'opsz' 144, 'SOFT' 40;
+  line-height: 1;
+  color: var(--rust);
+  margin-bottom: 12px;
+}
+.phase .name {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--paper);
+  margin-bottom: 8px;
+}
+.phase .desc {
+  font-size: 12px;
+  color: var(--ink-muted);
+  line-height: 1.5;
+}
+.phase::after {
+  content: '→';
+  position: absolute;
+  right: -8px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--rust);
+  font-size: 14px;
+  background: var(--bg-elev);
+  padding: 2px 4px;
+  z-index: 2;
+}
+.phase:last-child::after { display: none; }
+
+/* ── numbers grid ─────────────────────────────────────────────────── */
+.numbers-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  margin-top: 32px;
+}
+.num-cell {
+  background: var(--bg);
+  padding: 32px 20px;
+  text-align: left;
+}
+.num-cell .big {
+  font-family: var(--font-display);
+  font-size: 72px;
+  font-weight: 300;
+  line-height: 0.9;
+  color: var(--paper);
+  font-variation-settings: 'opsz' 144, 'SOFT' 50, 'WONK' 0;
+  letter-spacing: -0.04em;
+  margin-bottom: 8px;
+}
+.num-cell .lbl {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+
+/* ── finding box ──────────────────────────────────────────────────── */
+.finding-demo {
+  border: 1px solid var(--border-bright);
+  background: var(--bg-elev);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.7;
+  margin-top: 40px;
+  position: relative;
+}
+.finding-demo .bar {
+  height: 4px;
+  background: linear-gradient(90deg, var(--rust) 0%, var(--amber) 55%, var(--olive) 100%);
+}
+.finding-demo .fhead {
+  padding: 20px 28px;
+  border-bottom: 1px dashed var(--border);
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: baseline;
+}
+.finding-demo .ftag {
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--rust);
+  border: 1px solid var(--rust);
+  padding: 3px 8px;
+}
+.finding-demo .ftitle {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 22px;
+  color: var(--paper);
+  font-variation-settings: 'opsz' 60, 'SOFT' 30;
+}
+.finding-demo .fbody {
+  padding: 24px 28px;
+}
+.finding-demo .frow {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 16px;
+  padding: 4px 0;
+  color: var(--ink);
+}
+.finding-demo .frow .fk { color: var(--ink-muted); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; padding-top: 2px; }
+.finding-demo .fgates {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px dashed var(--border);
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 6px;
+}
+.finding-demo .fprose {
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px dashed var(--border);
+  font-family: var(--font-display);
+  font-weight: 300;
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--ink);
+  font-variation-settings: 'opsz' 40;
+  max-width: 65ch;
+}
+.finding-demo .fprose + .fprose { margin-top: 12px; padding-top: 0; border-top: none; }
+.finding-demo .fprose.fix { color: var(--olive); }
+.finding-demo .fprose.fix::before { content: 'Fix: '; color: var(--ink-muted); font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; }
+
+/* ── gates section ────────────────────────────────────────────────── */
+.gates-board {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  margin-top: 40px;
+}
+.gate-card {
+  border: 1px solid var(--border);
+  padding: 24px;
+  background: var(--bg-elev);
+  transition: border-color 0.2s, transform 0.2s;
+}
+.gate-card:hover { border-color: var(--rust); transform: translateY(-2px); }
+.gate-card .n {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.25em;
+  color: var(--rust);
+  margin-bottom: 8px;
+}
+.gate-card .t {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 400;
+  color: var(--paper);
+  font-variation-settings: 'opsz' 60, 'SOFT' 30;
+  letter-spacing: -0.01em;
+  margin-bottom: 12px;
+}
+.gate-card .q {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--ink-muted);
+  font-family: var(--font-mono);
+}
+.gate-card .q strong { color: var(--ink); }
+
+/* ── is/isn't table ───────────────────────────────────────────────── */
+.compare {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  margin-top: 40px;
+  border: 1px solid var(--border);
+}
+.compare-col {
+  padding: 32px;
+  background: var(--bg-elev);
+}
+.compare-col.yes { border-right: 1px solid var(--border); }
+.compare-col h4 {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  margin-bottom: 24px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+.compare-col.yes h4 { color: var(--olive); border-bottom-color: rgba(122, 138, 74, 0.3); }
+.compare-col.no h4 { color: var(--rust); border-bottom-color: rgba(200, 67, 44, 0.3); }
+.compare-col ul { list-style: none; }
+.compare-col li {
+  padding: 10px 0 10px 24px;
+  position: relative;
+  font-size: 14px;
+  line-height: 1.5;
+  border-bottom: 1px dashed var(--border);
+}
+.compare-col li:last-child { border-bottom: none; }
+.compare-col.yes li::before {
+  content: '✓';
+  position: absolute;
+  left: 0;
+  top: 10px;
+  color: var(--olive);
+  font-weight: 700;
+  font-family: var(--font-mono);
+}
+.compare-col.no li::before {
+  content: '×';
+  position: absolute;
+  left: 0;
+  top: 10px;
+  color: var(--rust);
+  font-weight: 700;
+  font-family: var(--font-mono);
+}
+
+/* ── install ──────────────────────────────────────────────────────── */
+.install-steps {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  margin-top: 40px;
+}
+.install-step {
+  border: 1px solid var(--border);
+  padding: 28px;
+  background: var(--bg-elev);
+}
+.install-step .s {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.25em;
+  color: var(--rust);
+  margin-bottom: 8px;
+}
+.install-step .th {
+  font-family: var(--font-display);
+  font-size: 22px;
+  color: var(--paper);
+  margin-bottom: 16px;
+  font-weight: 400;
+  font-variation-settings: 'opsz' 60, 'SOFT' 30;
+}
+.install-step pre {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  padding: 14px 16px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--amber);
+  overflow-x: auto;
+  line-height: 1.6;
+}
+.install-step p {
+  font-size: 13px;
+  color: var(--ink-muted);
+  margin-top: 12px;
+  line-height: 1.5;
+}
+
+/* ── quote ────────────────────────────────────────────────────────── */
+.pullquote {
+  margin: 64px 0;
+  padding: 0 8%;
+  text-align: center;
+}
+.pullquote blockquote {
+  font-family: var(--font-display);
+  font-weight: 300;
+  font-size: clamp(24px, 3.2vw, 36px);
+  line-height: 1.35;
+  color: var(--paper);
+  font-variation-settings: 'opsz' 100, 'SOFT' 50, 'WONK' 0;
+  font-style: italic;
+  letter-spacing: -0.015em;
+  position: relative;
+}
+.pullquote blockquote::before,
+.pullquote blockquote::after {
+  color: var(--rust);
+  font-size: 64px;
+  line-height: 0;
+  vertical-align: -16px;
+  font-style: normal;
+}
+.pullquote blockquote::before { content: '“'; margin-right: 8px; }
+.pullquote blockquote::after { content: '”'; margin-left: 4px; }
+
+/* ── footer ───────────────────────────────────────────────────────── */
+footer {
+  padding: 64px 0 40px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink-muted);
+}
+footer .grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  gap: 32px;
+  margin-bottom: 48px;
+}
+footer h5 {
+  font-size: 10px;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--paper);
+  margin-bottom: 16px;
+}
+footer .lm {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 18px;
+  font-variation-settings: 'opsz' 60, 'SOFT' 30;
+  color: var(--paper);
+  margin-bottom: 8px;
+}
+footer .lm::before { content: '▪ '; color: var(--rust); }
+footer .tag { color: var(--ink-muted); font-size: 12px; line-height: 1.6; max-width: 40ch; }
+footer ul { list-style: none; }
+footer li { padding: 4px 0; }
+footer a {
+  color: var(--ink-muted);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: color 0.15s, border-color 0.15s;
+}
+footer a:hover { color: var(--paper); border-bottom-color: var(--rust); }
+footer .base {
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+}
+
+/* ── responsive ───────────────────────────────────────────────────── */
+@media (max-width: 880px) {
+  .hero { grid-template-columns: 1fr; gap: 48px; padding: 64px 0 48px; }
+  .method-ribbon { grid-template-columns: 1fr; }
+  .phase { border-right: none; border-bottom: 1px solid var(--border); }
+  .phase:last-child { border-bottom: none; }
+  .phase::after { content: '↓'; right: 50%; top: auto; bottom: -10px; transform: translateX(50%); }
+  .numbers-grid { grid-template-columns: repeat(2, 1fr); }
+  .num-cell:last-child { grid-column: span 2; }
+  .gates-board { grid-template-columns: 1fr; }
+  .compare { grid-template-columns: 1fr; }
+  .compare-col.yes { border-right: none; border-bottom: 1px solid var(--border); }
+  .install-steps { grid-template-columns: 1fr; }
+  .problem-grid { grid-template-columns: 1fr; }
+  .finding-demo .fgates { grid-template-columns: repeat(2, 1fr); }
+  footer .grid { grid-template-columns: 1fr 1fr; }
+  section { padding: 64px 0; }
+}
+@media (max-width: 500px) {
+  .numbers-grid { grid-template-columns: 1fr; }
+  .num-cell:last-child { grid-column: auto; }
+  footer .grid { grid-template-columns: 1fr; }
+  .classification { font-size: 9px; }
+  header nav { display: none; }
+}
+</style>
+</head>
+<body>
+
+<div class="content">
+
+<div class="classification">
+  <span>CLASSIFICATION · PUBLIC // APACHE-2.0</span>
+  <span class="stamp">SKILL</span>
+  <span>FILE · BREACHGUARD/001</span>
+</div>
+
+<div class="wrap">
+
+<header>
+  <div class="logo">breachguard</div>
+  <nav>
+    <a href="#method">Method</a>
+    <a href="#anatomy">Anatomy</a>
+    <a href="#gates">Gates</a>
+    <a href="#install">Install</a>
+    <a href="https://github.com/">GitHub</a>
+  </nav>
+</header>
+
+<!-- ═══ HERO ═══════════════════════════════════════════════════════ -->
+<div class="hero">
+  <div class="hero-main">
+    <h1>Audit <em>before</em> you trust.</h1>
+    <p class="lede">
+      A methodology-driven security-audit skill for Claude. Structure first,
+      findings second, false-positive verification before every conclusion.
+      283 lenses across 27 domains. No hand-waving, no slop.
+    </p>
+    <div class="cta-row">
+      <a href="#install" class="btn primary">
+        Download .skill <span class="arrow">↓</span>
+      </a>
+      <a href="https://github.com/" class="btn">
+        View source <span class="arrow">→</span>
+      </a>
+    </div>
+  </div>
+
+  <aside class="file-card">
+    <div class="head">
+      <span><span class="dot"></span> live finding</span>
+      <span>F-NEW-1</span>
+    </div>
+    <div class="body">
+      <div class="row"><span class="k">severity</span><span class="v red">HIGH</span></div>
+      <div class="row"><span class="k">confidence</span><span class="v amber">HIGH</span></div>
+      <div class="row"><span class="k">verdict</span><span class="v red">TRUE_POSITIVE</span></div>
+      <div class="row"><span class="k">lens</span><span class="v">sharp-edges<br>supply-chain</span></div>
+      <div class="row"><span class="k">file</span><span class="v">src/mcp/McpBridge.ts:249</span></div>
+      <div class="row"><span class="k">attacker</span><span class="v">unauthenticated-remote /<br>network-only /<br>public-api</span></div>
+      <div class="row"><span class="k">exploit.</span><span class="v amber">conditional</span></div>
+      <div class="gates-inline">
+        <span class="gate-pill pass">sink ✓</span>
+        <span class="gate-pill pass">src ✓</span>
+        <span class="gate-pill pass">reach ✓</span>
+        <span class="gate-pill unc">val ~</span>
+        <span class="gate-pill pass">ctrl ✓</span>
+        <span class="gate-pill pass">impact ✓</span>
+      </div>
+    </div>
+  </aside>
+</div>
+
+<!-- ═══ PROBLEM ════════════════════════════════════════════════════ -->
+<section id="problem">
+  <div class="sec-label">01 · the problem</div>
+  <h2 class="sec-h">Most audits ship with a <em>40 % false-positive rate</em>.</h2>
+  <p class="sec-lede">
+    The industry has accepted that security scanners flag noise. Developers
+    have learned to ignore half of what they see. Auditors stamp "LGTM" on
+    findings they can't verify. The signal-to-noise ratio got so bad that
+    security teams measure success by ticket closure, not by what actually
+    broke in production.
+  </p>
+
+  <div class="problem-grid">
+    <div class="problem-col bad">
+      <h3>Conventional audit output</h3>
+      <p>"<span class="redacted">SQL injection possible in line 42</span>" — no data flow.</p>
+      <p>"<span class="redacted">Weak crypto detected</span>" — no exploit path.</p>
+      <p>"<span class="redacted">Authentication bypass risk</span>" — no attacker model.</p>
+      <p>"<span class="redacted">Review required</span>" — nothing you can act on.</p>
+    </div>
+    <div class="problem-col">
+      <h3>breachguard output</h3>
+      <p><strong>HIGH / HIGH / TRUE_POSITIVE</strong> — Cloudflare tunnel exposes localhost MCP server publicly.</p>
+      <p><strong>Attacker model:</strong> unauthenticated-remote / network-only / public-api.</p>
+      <p><strong>Evidence:</strong> DIRECT — <code>cp.spawn('cloudflared', ...)</code> at <code>McpBridge.ts:249</code>.</p>
+      <p><strong>Fix:</strong> Warning dialog, token rotation, <code>crypto.timingSafeEqual()</code>. ~4h.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ METHOD ══════════════════════════════════════════════════════ -->
+<section id="method">
+  <div class="sec-label">02 · methodology</div>
+  <h2 class="sec-h">Five phases. <em>Six gates.</em> No shortcuts.</h2>
+  <p class="sec-lede">
+    Each audit follows the same protocol. Skip a phase, you lose calibration.
+    Skip a gate, you ship a false positive. The structure is the deliverable.
+  </p>
+
+  <div class="method-ribbon">
+    <div class="phase">
+      <div class="num">01</div>
+      <div class="name">Intake</div>
+      <div class="desc">Scope, attacker-models, critical paths. What's in, what's out, who's attacking.</div>
+    </div>
+    <div class="phase">
+      <div class="num">02</div>
+      <div class="name">Context</div>
+      <div class="desc">Entrypoints, trust boundaries, actors, storage. The map before the walk.</div>
+    </div>
+    <div class="phase">
+      <div class="num">03</div>
+      <div class="name">Lens</div>
+      <div class="desc">Apply relevant lenses from the 283-pattern catalog. Breadth before depth.</div>
+    </div>
+    <div class="phase">
+      <div class="num">04</div>
+      <div class="name">FP-Verify</div>
+      <div class="desc">Six gates: Sink · Source · Reach · Validation · Control · Impact. Fail-closed on uncertainty.</div>
+    </div>
+    <div class="phase">
+      <div class="num">05</div>
+      <div class="name">Report</div>
+      <div class="desc">Calibrated severity. Explicit coverage limits. Fix estimates. Release-gate verdict.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ NUMBERS ═════════════════════════════════════════════════════ -->
+<section>
+  <div class="sec-label">03 · scale</div>
+  <h2 class="sec-h">A catalog, <em>not a checklist.</em></h2>
+
+  <div class="numbers-grid">
+    <div class="num-cell"><div class="big">283</div><div class="lbl">specialist lenses</div></div>
+    <div class="num-cell"><div class="big">27</div><div class="lbl">domains</div></div>
+    <div class="num-cell"><div class="big">12</div><div class="lbl">operating modes</div></div>
+    <div class="num-cell"><div class="big">6</div><div class="lbl">role personas</div></div>
+    <div class="num-cell"><div class="big">20</div><div class="lbl">bug classes</div></div>
+  </div>
+</section>
+
+<!-- ═══ PULL QUOTE ══════════════════════════════════════════════════ -->
+<div class="wrap">
+  <div class="pullquote">
+    <blockquote>
+      A finding without an attacker model is a vibe, not a vulnerability.
+    </blockquote>
+  </div>
+</div>
+
+<!-- ═══ ANATOMY ═════════════════════════════════════════════════════ -->
+<section id="anatomy">
+  <div class="sec-label">04 · anatomy of a finding</div>
+  <h2 class="sec-h">Every finding, <em>the same scaffold.</em></h2>
+  <p class="sec-lede">
+    Severity is calibrated against confidence. Gates are visible. Evidence is
+    classified (direct / inference / heuristic). A reviewer can see, from the
+    structure alone, whether to act, investigate further, or ignore.
+  </p>
+
+  <div class="finding-demo">
+    <div class="bar"></div>
+    <div class="fhead">
+      <div>
+        <span class="ftag">HIGH · HIGH · TRUE_POSITIVE</span>
+        <div class="ftitle" style="margin-top:10px;">F-NEW-1 — Cloudflare tunnel exposes localhost MCP server publicly</div>
+      </div>
+    </div>
+    <div class="fbody">
+      <div class="frow"><span class="fk">Lens</span><span>sharp-edges, supply-chain</span></div>
+      <div class="frow"><span class="fk">File</span><span>src/mcp/McpBridge.ts:249-296</span></div>
+      <div class="frow"><span class="fk">Attacker-Model</span><span>unauthenticated-remote / network-only / public-api</span></div>
+      <div class="frow"><span class="fk">Exploitability</span><span style="color:var(--amber);">conditional</span></div>
+      <div class="frow"><span class="fk">Evidence</span><span>DIRECT — spawn('cloudflared', ['tunnel', '--url', ...])</span></div>
+
+      <div class="fgates">
+        <span class="gate-pill pass">sink ✓</span>
+        <span class="gate-pill pass">source ✓</span>
+        <span class="gate-pill pass">reach ✓</span>
+        <span class="gate-pill unc">validation ~</span>
+        <span class="gate-pill pass">control ✓</span>
+        <span class="gate-pill pass">impact ✓</span>
+      </div>
+
+      <p class="fprose">
+        The MCP server has token auth and a 1 MB body limit — adequate for
+        localhost. The moment <code>startTunnel()</code> runs, trycloudflare.com
+        exposes the endpoint over HTTPS with Bearer-token as the only gate.
+        CORS restrictions protect browsers; curl and Python ignore CORS entirely.
+      </p>
+      <p class="fprose fix">
+        UI warning on tunnel start, token rotation on enable/disable,
+        <code>crypto.timingSafeEqual()</code> instead of string compare,
+        absolute-path config for cloudflared binary. Estimated ~4h.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ GATES ══════════════════════════════════════════════════════ -->
+<section id="gates">
+  <div class="sec-label">05 · fp-verification</div>
+  <h2 class="sec-h">Six questions. <em>Fail-closed</em> on any maybe.</h2>
+  <p class="sec-lede">
+    A finding that can't answer all six passes through the report as
+    <span style="color:var(--amber);">UNCERTAIN</span> with the specific
+    gate(s) that failed. This is calibration made legible. Nothing is
+    silently promoted to TRUE_POSITIVE.
+  </p>
+
+  <div class="gates-board">
+    <div class="gate-card">
+      <div class="n">GATE · 01</div>
+      <div class="t">Sink</div>
+      <div class="q">Is there a <strong>dangerous destination</strong> that data reaches? Exec, eval, file write, network request, SQL parser.</div>
+    </div>
+    <div class="gate-card">
+      <div class="n">GATE · 02</div>
+      <div class="t">Source</div>
+      <div class="q">Does <strong>attacker-controlled data</strong> enter the system? User input, network response, file content.</div>
+    </div>
+    <div class="gate-card">
+      <div class="n">GATE · 03</div>
+      <div class="t">Reachability</div>
+      <div class="q">Is the vulnerable code <strong>actually reachable</strong>? Dead code, feature flags, debug-only paths.</div>
+    </div>
+    <div class="gate-card">
+      <div class="n">GATE · 04</div>
+      <div class="t">Validation</div>
+      <div class="q">Is there an <strong>effective check</strong> between source and sink? Sanitizers, escaping, canonicalization.</div>
+    </div>
+    <div class="gate-card">
+      <div class="n">GATE · 05</div>
+      <div class="t">Attacker&nbsp;Control</div>
+      <div class="q">Can the attacker <strong>actually shape</strong> the data? Or is it constrained by prior validation upstream?</div>
+    </div>
+    <div class="gate-card">
+      <div class="n">GATE · 06</div>
+      <div class="t">Impact</div>
+      <div class="q">If exploited, <strong>what breaks?</strong> Confidentiality, integrity, availability. Privilege level. Data class.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ IS/ISN'T ════════════════════════════════════════════════════ -->
+<section>
+  <div class="sec-label">06 · positioning</div>
+  <h2 class="sec-h">What it is. <em>What it isn't.</em></h2>
+
+  <div class="compare">
+    <div class="compare-col yes">
+      <h4>breachguard is</h4>
+      <ul>
+        <li>A Claude skill — a <code>.skill</code> archive you load once</li>
+        <li>A methodology framework with enforceable gates</li>
+        <li>A first-pass audit that surfaces hot-spots and attacker paths</li>
+        <li>Useful for security, performance, architecture, compliance review</li>
+        <li>Honest about its own scope limits in every report</li>
+        <li>Apache-2.0 licensed, inspected source</li>
+      </ul>
+    </div>
+    <div class="compare-col no">
+      <h4>breachguard is not</h4>
+      <ul>
+        <li>A replacement for a professional security firm or pentest</li>
+        <li>A CVE scanner — use Semgrep / Snyk / Dependabot for that</li>
+        <li>A mobile-app-specific tool — see OWASP MAS skill</li>
+        <li>An LLM prompt-injection scanner — see dedicated skill</li>
+        <li>A certification of absence — only a structured surfacing</li>
+        <li>A silver bullet. There are none in this field.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ INSTALL ═════════════════════════════════════════════════════ -->
+<section id="install">
+  <div class="sec-label">07 · installation</div>
+  <h2 class="sec-h">Load it. <em>Use it.</em></h2>
+
+  <div class="install-steps">
+    <div class="install-step">
+      <div class="s">OPTION · A</div>
+      <div class="th">Claude.ai / Desktop</div>
+      <pre>Settings
+  → Skills
+  → Upload
+  → breachguard.skill</pre>
+      <p>Enable the skill in your workspace. Auto-activates on security-audit intent.</p>
+    </div>
+    <div class="install-step">
+      <div class="s">OPTION · B</div>
+      <div class="th">Claude Code</div>
+      <pre>unzip breachguard.skill \
+  -d ~/.claude/skills/</pre>
+      <p>Copies the skill into your user skills directory. Restart Claude Code to pick up.</p>
+    </div>
+    <div class="install-step">
+      <div class="s">OPTION · C</div>
+      <div class="th">Project-specific</div>
+      <pre>mv breachguard.skill \
+  &lt;project&gt;/.claude/skills/</pre>
+      <p>Scopes the skill to a single project. Useful when auditing a repo locally.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ FOOTER ══════════════════════════════════════════════════════ -->
+<footer>
+  <div class="grid">
+    <div>
+      <div class="lm">breachguard</div>
+      <p class="tag">
+        A methodology-driven security-audit skill for Claude. Structure first,
+        findings second, false-positive verification before every conclusion.
+      </p>
+    </div>
+    <div>
+      <h5>Project</h5>
+      <ul>
+        <li><a href="#method">Methodology</a></li>
+        <li><a href="#anatomy">Anatomy</a></li>
+        <li><a href="#gates">Gates</a></li>
+        <li><a href="#install">Install</a></li>
+      </ul>
+    </div>
+    <div>
+      <h5>Source</h5>
+      <ul>
+        <li><a href="https://github.com/">GitHub</a></li>
+        <li><a href="#">Releases</a></li>
+        <li><a href="#">Changelog</a></li>
+        <li><a href="#">Contributing</a></li>
+      </ul>
+    </div>
+    <div>
+      <h5>Credits</h5>
+      <ul>
+        <li><a href="https://appsec.guide">ToB · Testing Handbook</a></li>
+        <li style="font-size:10px; color:var(--ink-dim); padding-left:12px;">FP-gates · attacker-triad · evidence levels</li>
+        <li><a href="#">License · Apache-2.0</a></li>
+        <li><a href="#">Notice</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="base">
+    <span>© 2026 · breachguard contributors · Apache-2.0</span>
+    <span>Provided without warranty. Verify every finding yourself.</span>
+  </div>
+</footer>
+
+</div><!-- /.wrap -->
+
+</div><!-- /.content -->
+
+</body>
+</html>

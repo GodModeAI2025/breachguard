@@ -249,11 +249,14 @@ im Repo."
 **Input:** "F-001 wurde in Commit abc123..def456 gefixt. Ist das sauber?"
 
 **Ablauf:**
-1. Fix-Delta extrahieren.
-2. Remediation-Check: Adressiert der Fix die Root-Cause?
+1. Fix-Delta extrahieren, Verifikations-Tiefe festlegen (SOURCE/BUILD/RUNTIME).
+2. Remediation-Check: Adressiert der Fix die Root-Cause? Test-Beleg nur,
+   wenn er auf dem Vuln-Stand fehlschlaegt und auf dem Fix-Stand besteht.
 3. Regression-Check: Neue Vulns im Diff?
 4. Completeness-Check: Alle Variants gefixt?
-5. Report: Verdict FULL/PARTIAL/FAILED/REGRESSION_INTRODUCED.
+5. Behavior-Check: Legitimes Verhalten erhalten?
+6. Report: alle Befunde einzeln, offene Gaps separat, dann Verdict
+   FULL/PARTIAL/FAILED/REGRESSION_INTRODUCED (FULL nur ohne Gaps).
 
 **Output:** siehe `modes.md` §verify-fix Beispiel, bzw.
 `breachguard.fix_verification`-Schema in `agent-output.md`.

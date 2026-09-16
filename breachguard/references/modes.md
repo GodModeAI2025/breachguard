@@ -116,13 +116,34 @@ Rolle Detector).
 **Finding + Fix-Commit gegeben. Ist der Root-Cause geschlossen?
 Regressionen?**
 
-**Input:** Original-Finding + Commit-Range oder Diff.
-**Output:** 3-Punkt-Verifikation:
+**Input:** Original-Finding + Commit-Range oder Diff. Optional:
+Test-/Build-Output fuer Vuln-Stand und Fix-Stand.
+**Output:** 4-Punkt-Verifikation:
 1. **Remediation:** Adressiert der Fix den Root-Cause? (nicht nur das
    Symptom)
 2. **Regression:** Führt der Fix neue Vulns ein?
 3. **Completeness:** Sind alle Variants gefixt, nicht nur die
    ursprüngliche Stelle?
+4. **Behavior:** Bleibt legitimes Verhalten erhalten? (ein Fix, der die
+   Funktion abschaltet, schliesst die Luecke, ist aber kein Fix)
+
+**Regeln:**
+- **Befunde nebeneinander, nicht gegeneinander.** Eine offene Variante
+  und eine Regression koennen gleichzeitig vorliegen. Jeder Check meldet
+  seine Befunde einzeln; das Verdict fasst zusammen und verdeckt keinen.
+- **Luecken sind kein PASS.** Was nicht geprueft werden konnte (kein
+  Zugriff auf Aufrufer, Test-Output fehlt, Variante nur vermutet), steht
+  als `gap` im Report. Mit offenem Gap gibt es kein `FULL_REMEDIATION`.
+- **Baseline zuerst.** Ein Test belegt den Fix nur, wenn er auf dem
+  Vuln-Stand fehlschlaegt **und** auf dem Fix-Stand besteht, und zwar an
+  der Sicherheits-Assertion, nicht an einem Import- oder Build-Fehler.
+  Ein Test, der die Luecke nie reproduziert hat, belegt nichts.
+- **Verifikations-Tiefe ehrlich angeben** (nicht zu verwechseln mit dem
+  Evidence-Level DIRECT/INFERENCE/HEURISTIC eines Findings):
+  `SOURCE` (nur Diff/Code gelesen),
+  `BUILD` (kompiliert/analysiert, Verhalten nicht ausgefuehrt),
+  `RUNTIME` (Exploit- bzw. Sicherheits-Assertion lief gegen beide
+  Staende). Ohne Test-Output ist `SOURCE` die Obergrenze.
 
 **Ablauf:**
 - Phase 1 (Intake): Finding + Fix-Context einsammeln.
@@ -137,6 +158,7 @@ Regressionen?**
 **Fix-Commit(s):** <hash-range>
 **Fix-Autor:** <name>
 **Fix-Datum:** <ISO>
+**Verifikations-Tiefe:** SOURCE (kein Test-Output geliefert)
 
 ## Remediation-Check
 - Root-Cause (String-Konkat) addressed: JA (wechselt auf Parameterized)
@@ -151,6 +173,14 @@ Regressionen?**
   - 8 von 9 gefixt
   - **Offen:** `orders.js:12` im Fix-Commit-Range nicht adressiert
     → Tracking empfohlen
+
+## Behavior-Check
+- Legitime Abfragen mit gueltiger ID: unveraendert (gleiche Query, nur
+  parametrisiert)
+
+## Gaps
+- Kein Test, der auf dem Vuln-Stand fehlschlaegt und auf dem Fix-Stand
+  besteht → Regressionstest fuer `GET /users/:id` mit `1 OR 1=1` empfohlen
 
 ## Verdict
 - Fix-Status: PARTIAL_REMEDIATION

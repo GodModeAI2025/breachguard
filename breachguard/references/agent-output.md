@@ -234,6 +234,12 @@ next_agent_actions:
     payload: {title: "Unfixed variant of F-001 at orders.js:12", priority: medium}
 ```
 
+**Kompatibilitaet 1.0 → 1.1:** Nur additive Felder, alle 1.0-Felder und
+Verdict-Werte bleiben unveraendert. Ein 1.0-Consumer ignoriert
+`verification_depth`, `behavior` und `gaps`. Ein 1.1-Consumer, der ein
+1.0-Artifact liest, behandelt fehlende `gaps` als "nicht angegeben" (nicht
+als leere Liste) und `verification_depth` als `SOURCE`.
+
 ## Schema: `variant_report` (NEU, fuer variant-Mode)
 
 ```yaml

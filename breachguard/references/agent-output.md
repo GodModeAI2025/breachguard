@@ -195,12 +195,13 @@ next_agent_actions:
 
 ```yaml
 schema: breachguard.fix_verification
-version: 1.0
+version: 1.1                         # 1.1: verification_depth, behavior, gaps
 source_finding_id: F-001
 source_finding_summary: "SQL Injection in users.js:4"
 fix_commits: ["abc123", "def456"]
 fix_author: "jane@example.com"
 fix_date: "2026-04-18T14:30:00Z"
+verification_depth: SOURCE           # SOURCE | BUILD | RUNTIME (RUNTIME nur mit Test-Output fuer beide Staende)
 remediation:
   addresses_root_cause: true
   symptom_only: false
@@ -214,7 +215,16 @@ completeness:
   variants_unfixed: [
     {file: "orders.js", line: 12, reason: "not in fix commit range"}
   ]
+behavior:
+  legitimate_behavior_preserved: true
+  notes: "Gueltige IDs liefern dieselben Datensaetze"
+gaps:                                # Was nicht geprueft werden konnte. Leere Liste nur, wenn wirklich nichts offen ist
+  - check: remediation
+    reason: "Kein Test, der auf dem Vuln-Stand fehlschlaegt und auf dem Fix-Stand besteht"
+    needed: "Regressionstest GET /users/:id mit Payload '1 OR 1=1'"
 verdict: PARTIAL_REMEDIATION         # FULL_REMEDIATION | PARTIAL_REMEDIATION | FAILED_REMEDIATION | REGRESSION_INTRODUCED
+                                     # Zusammenfassung, keine Einzelwahrheit: Regression UND offene Variante -> REGRESSION_INTRODUCED,
+                                     # die Variante bleibt trotzdem in completeness.variants_unfixed. FULL_REMEDIATION nur ohne gaps.
 new_release_gate:
   decision: WARN                     # BLOCK/WARN/PASS
   rationale: "1 variant unfixed (orders.js:12)"

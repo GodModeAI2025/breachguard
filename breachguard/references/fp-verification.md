@@ -23,6 +23,47 @@ UNCERTAIN ist ein vollwertiges Verdikt — **es wird im Report separat
 ausgewiesen** und triggert eine explizite User-Entscheidung ("soll ich
 tiefer pruefen?").
 
+## Die Regel "Widerlegen statt bestaetigen"
+
+Ein Gate-Review, der das Raw Finding nacherzaehlt, filtert nichts. Wer den
+Verdacht selbst formuliert hat, findet ihn beim zweiten Lesen wieder —
+das ist Bestaetigungsfehler, kein Verdict. Deshalb:
+
+- **Die Pruefung beginnt am Artefakt, nicht am Raw Finding.** Jede im Raw
+  Finding genannte Stelle wird neu gelesen. Eine verrutschte Zeilenangabe
+  ist ein Zitierfehler: Ort korrigieren, dann normal durch die Gates.
+  `FALSE_POSITIVE` erst, wenn der Code die behauptete Konstruktion
+  nirgends im Scope zeigt oder ihr widerspricht — ein Finding wegen einer
+  falschen Zeilennummer fallen zu lassen waere genau das Runterstufen,
+  das die Fail-Closed-Regel verbietet.
+- **Beobachtung und Confidence-Estimate aus Phase 3 sind Behauptungen,
+  kein Beleg.** Die Confidence im Report entsteht in Phase 4 neu. Ein Gate
+  gilt nur als bestanden, wenn der Beleg am Artefakt haengt; "so steht es
+  im Raw Finding" ist kein Beleg und fuehrt zu `UNCERTAIN`. Bei den Gates,
+  die eine Abwesenheit feststellen (Validation, Impact), ist der Beleg der
+  benannte gelesene Pfad: welche Datei, welche Middleware-Kette, welcher
+  Handler wurden angesehen. "Nichts gefunden" ohne diese Liste ist
+  `UNCERTAIN`, nicht bestanden.
+- **Wer pruefen kann, ohne selbst gejagt zu haben, tut das.** Erlaubt die
+  Umgebung getrennte Review-Instanzen, bekommt die pruefende Instanz
+  Bug-Class, Ort und Code — nicht die Begruendung des Finders und nicht
+  das Urteil einer anderen pruefenden Instanz. Das ist kein Freibrief fuer
+  eigene Subprozesse (SKILL.md §"Was dieser Skill NICHT macht"). Der
+  Normalfall bleibt die eine Sitzung, und dort wird die Gate-Runde
+  ausdruecklich als Widerlegungsversuch gefuehrt: erst aufschreiben,
+  **was das Finding widerlegen wuerde**, dann im Code gezielt danach
+  suchen.
+- **Gegenprobe in die andere Richtung.** Dass anderswo im Repo dasselbe
+  Muster steht, ist Kalibrierung und kein Grund, ein Finding fallen zu
+  lassen. Ein verbreiteter Fehler bleibt ein Fehler; der Befund gehoert
+  dann in die Variant-Analyse (`variant-analysis.md`), nicht in den
+  Papierkorb.
+
+Das gilt fuer alle sechs Gates und fuer die Bug-Class-Checks. Der
+Widerlegungsversuch gehoert in den Gate-Trace (siehe
+§"Dokumentations-Pflicht pro Finding"): eine Regel, deren Ergebnis
+nirgends auftaucht, ist nicht nachpruefbar.
+
 ---
 
 ## Die 6 Gate Reviews
@@ -230,6 +271,8 @@ Im Report muss pro Finding der Gate-Trace dokumentiert sein:
 - Attacker-Control: PASS (URL-Param, full control)
 - Impact: PASS (SELECT Dump ueber UNION moeglich)
 - Bug-Class (Parameterization): PASS (String-Konkat statt Parameter)
+**Widerlegungsversuch:** gesucht nach Parametrisierung, Cast auf Integer,
+Zod-Schema in `routes/` und `middleware/` — nichts davon auf dem Pfad
 **Verdict: TRUE_POSITIVE**
 
 **Problem:** [...]

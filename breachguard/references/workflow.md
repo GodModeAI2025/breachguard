@@ -36,7 +36,8 @@
    Findings.**
 
 7. **FP-Verifikation** (nur Security-Modi ausser `triage`): Jedes Raw
-   Finding durch die 6 Gates aus `fp-verification.md` fuehren.
+   Finding durch die 6 Gates aus `fp-verification.md` fuehren — als
+   Widerlegungsversuch am Code, nicht als zweites Lesen des Raw Findings.
    Bug-Class-spezifische Checks aus `bug-class-verification.md` hinzufuegen.
    Verdict setzen: TRUE_POSITIVE / FALSE_POSITIVE / UNCERTAIN.
 
@@ -58,7 +59,9 @@
 
 - **Keine Halluzinationen.** "Keine Findings" ist valide.
 - **Severity + Confidence + Verdict ehrlich.** `CRITICAL` = Prod-Breaker/
-  Security, `LOW` = Convention. Bei UNCLEAR: `UNCERTAIN` setzen.
+  Security, `LOW` = Convention. Bei UNCLEAR: `UNCERTAIN` setzen. Die
+  Confidence im Report stammt aus der Gate-Runde, nicht aus dem
+  Confidence-Estimate des Raw Findings.
 - **Scope-Limits explizit.** Report-Header listet Included/Excluded.
 - **Bei grossem Repo** → CLI-Fallback.
 - **Bei `deploy`-Modus** → niemals Shell gegen Live-Systeme.

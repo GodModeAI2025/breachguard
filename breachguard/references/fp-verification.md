@@ -23,6 +23,34 @@ UNCERTAIN ist ein vollwertiges Verdikt — **es wird im Report separat
 ausgewiesen** und triggert eine explizite User-Entscheidung ("soll ich
 tiefer pruefen?").
 
+## Die Regel "Widerlegen statt bestaetigen"
+
+Ein Gate-Review, der das Raw Finding nacherzaehlt, filtert nichts. Wer den
+Verdacht selbst formuliert hat, findet ihn beim zweiten Lesen wieder —
+das ist Bestaetigungsfehler, kein Verdict. Deshalb:
+
+- **Die Pruefung beginnt am Artefakt, nicht am Raw Finding.** Jede im Raw
+  Finding genannte Stelle wird neu gelesen. Stimmt die Zeile nicht mehr
+  oder steht dort etwas anderes, ist das Finding `FALSE_POSITIVE`.
+- **Beobachtung und Confidence-Estimate aus Phase 3 sind Behauptungen,
+  kein Beleg.** Die Confidence im Report entsteht in Phase 4 neu. Ein Gate
+  gilt nur als bestanden, wenn der Beleg im Artefakt steht; "so steht es
+  im Raw Finding" ist kein Beleg und fuehrt zu `UNCERTAIN`.
+- **Wer pruefen kann, ohne selbst gejagt zu haben, tut das.** Stehen
+  Subagenten zur Verfuegung, bekommt die pruefende Instanz Bug-Class, Ort
+  und Code — nicht die Begruendung des Finders und nicht das Urteil einer
+  anderen pruefenden Instanz. Laeuft alles in einer Sitzung, wird die
+  Gate-Runde ausdruecklich als Widerlegungsversuch gefuehrt: erst
+  aufschreiben, **was das Finding widerlegen wuerde**, dann im Code danach
+  suchen.
+- **Gegenprobe in die andere Richtung.** Dass anderswo im Repo dasselbe
+  Muster steht, ist Kalibrierung und kein Grund, ein Finding fallen zu
+  lassen. Ein verbreiteter Fehler bleibt ein Fehler; der Befund gehoert
+  dann in die Variant-Analyse (`variant-analysis.md`), nicht in den
+  Papierkorb.
+
+Das gilt fuer alle sechs Gates und fuer die Bug-Class-Checks.
+
 ---
 
 ## Die 6 Gate Reviews

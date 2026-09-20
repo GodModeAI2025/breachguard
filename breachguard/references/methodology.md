@@ -269,6 +269,12 @@ FALSE / UNCERTAIN.
 Siehe **`fp-verification.md`** fuer die kompletten Gates und
 **`bug-class-verification.md`** fuer bug-class-spezifische Rubriken.
 
+Die Phase beginnt am Artefakt, nicht am Raw Finding: jede genannte Stelle
+wird neu gelesen, und die Beobachtung aus Phase 3 gilt als Behauptung, nicht
+als Beleg. Ein Gate, das nur die Formulierung des Raw Findings
+wiederholt, ist `UNCERTAIN`. Siehe `fp-verification.md` §"Widerlegen statt
+bestaetigen".
+
 **Kurzfassung der 6 Gates:**
 
 1. **Sink Gate** — Ist der alleged-vulnerable-Call wirklich der Sink?
